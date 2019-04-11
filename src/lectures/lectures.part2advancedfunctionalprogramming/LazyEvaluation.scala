@@ -95,7 +95,7 @@ object LazyEvaluation extends App{
 
     override def tail: MyStream[Nothing] = ???
 
-    override def #::[B >: Nothing](element: B): MyStream[B] = new NonEmptyStream[B](element, new EmptyStream[Nothing])
+    override def #::[B >: Nothing](element: B): MyStream[B] = new FiniteStream[B](element, new EmptyStream[Nothing])
 
     override def ++[B >: Nothing](anotherStream: MyStream[B]): MyStream[B] = ???
 
@@ -112,7 +112,27 @@ object LazyEvaluation extends App{
     override def takeAsList(n: Int): List[Nothing] = ???
   }
 
-  class NonEmptyStream[+A](val head: A, val tail: MyStream[A], val generator: A => A) extends MyStream[A] {
+  class FiniteStream[+A](val head: A, val tail: MyStream[A]) extends MyStream[A] {
+    override def isEmpty: Boolean = ???
+
+    override def #::[B >: A](element: B): MyStream[B] = ???
+
+    override def ++[B >: A](anotherStream: MyStream[B]): MyStream[B] = ???
+
+    override def foreach(f: A => Unit): Unit = ???
+
+    override def map[B](f: A => B): MyStream[B] = ???
+
+    override def flatMap[B](f: A => MyStream[B]): MyStream[B] = ???
+
+    override def filter(predicate: A => Boolean): MyStream[A] = ???
+
+    override def take(n: Int): MyStream[A] = ???
+
+    override def takeAsList(n: Int): List[A] = ???
+  }
+
+  class InfiniteStream[+A](val head: A, val tail: MyStream[A], val generator: A => A) extends MyStream[A] {
     override def isEmpty: Boolean = false
 
     override def head: A = ???
