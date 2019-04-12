@@ -132,12 +132,8 @@ object LazyEvaluation extends App{
     override def takeAsList(n: Int): List[A] = ???
   }
 
-  class InfiniteStream[+A](val head: A, val tail: MyStream[A], val generator: A => A) extends MyStream[A] {
+  class InfiniteStream[+A](override val head: A, override val tail: MyStream[A], generator: A => A) extends MyStream[A] {
     override def isEmpty: Boolean = false
-
-    override def head: A = ???
-
-    override def tail: MyStream[A] = ???
 
     override def #::[B >: A](element: B): MyStream[B] = ???
 

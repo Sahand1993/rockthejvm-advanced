@@ -116,4 +116,20 @@ object AdvancedPatternMatching extends App {
   println(decomposed)
 
   println(MyList.unapplySeq(myList)) // Why does this not print a Seq??
+
+  abstract class Wrapper[T] {
+    def isEmpty: Boolean
+    def get: T
+  }
+
+  object PersonWrapper {
+    def unapply(person: Person): Wrapper[String] = new Wrapper[String] {
+      def isEmpty = false
+      def get = person.name
+    }
+  }
+
+  println(bob match {
+    case PersonWrapper(n) => n
+  })
 }
