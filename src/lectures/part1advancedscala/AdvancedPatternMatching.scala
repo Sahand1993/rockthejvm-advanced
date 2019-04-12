@@ -43,7 +43,7 @@ object AdvancedPatternMatching extends App {
   /*
   Excercise
    */
-  val n: Int = 10
+  val n: Int = 1
   val mathProperty = n match {
     case x if x < 10 => "Single digit"
     case x if x % 2 == 0 => "Even"
@@ -63,5 +63,57 @@ object AdvancedPatternMatching extends App {
   val cleanerMathProperty = n match {
     case NumberMatcher(message) => message
   }
-  println(cleanerMathProperty)
+
+  // other possible solution
+  object even {
+    def unapply(n: Int): Boolean = n % 2 == 0
+  }
+
+  object singleDigit {
+    def unapply(n: Int): Boolean = n < 10 && n > -10
+  }
+
+  val anotherCleanMathProperty = n match {
+    case singleDigit() => "Single digit"
+    case even() => "Even"
+    case _ => "Something else"
+  }
+  println(anotherCleanMathProperty)
+
+
+  // infix patterns
+  case class Or[A, B](a: A, b: B) // called Either in Scala
+  val either = Or(2, "two")
+  val humanDescription = either match {
+    case number Or string => s"$number is written as $string"
+  }
+  println(humanDescription)
+
+  // decomposing sequences
+  val vararg = numbers match {
+    case List(1, _*) => "Starting with one"
+  }
+
+  abstract class MyList[+A] {
+    def head: A = ???
+    def tail: MyList[A] = ???
+  }
+
+  object Empty extends MyList[Nothing]
+  case class Cons[+A](override val head: A, override val tail: MyList[A]) extends MyList[A]
+
+  object MyList {
+    def unapplySeq[A](list: MyList[A]): Option[Seq[A]] =
+      if (list == Empty) Some(Seq.empty)
+      else unapplySeq(list.tail).map(list.head +: _)
+  }
+
+  val myList = Cons(1, Cons(2, Cons(3, Empty)))
+  val decomposed = myList match {
+    case MyList(1,2,_*) => "Starting with 1, 2"
+    case _ => "Something else"
+  }
+  println(decomposed)
+
+  println(MyList.unapplySeq(myList)) // Why does this not print a Seq??
 }
