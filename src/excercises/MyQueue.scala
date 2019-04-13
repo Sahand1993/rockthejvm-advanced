@@ -1,4 +1,4 @@
-package lectures.Excercises
+package excercises
 
 abstract class MyQueue[A] {
   def remove: (A, MyQueue[A])

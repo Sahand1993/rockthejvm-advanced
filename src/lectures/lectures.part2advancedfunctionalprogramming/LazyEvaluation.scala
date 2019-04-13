@@ -1,5 +1,8 @@
 package lectures.lectures.part2advancedfunctionalprogramming
 
+import com.sun.javaws.exceptions.InvalidArgumentException
+import com.sun.tools.corba.se.idl.InvalidArgument
+
 object LazyEvaluation extends App{
 
   // lazy delays the evaluation of values
@@ -67,88 +70,4 @@ object LazyEvaluation extends App{
     naturals.foreach(println) // will crash because naturals is infinite
     naturals.map(_ * 2) // stream of all even numbers
    */
-  abstract class MyStream[+A] {
-    def isEmpty: Boolean
-    def head: A
-    def tail: MyStream[A]
-
-    def #::[B >: A](element: B): MyStream[B] // prepend operator
-    def ++[B >: A](anotherStream: MyStream[B]): MyStream[B]
-
-    def foreach(f: A => Unit): Unit
-    def map[B](f: A => B): MyStream[B]
-    def flatMap[B](f: A => MyStream[B]): MyStream[B]
-    def filter(predicate: A => Boolean): MyStream[A]
-
-    def take(n: Int): MyStream[A] // takes first n elements out of the stream
-    def takeAsList(n: Int): List[A]
-  }
-
-  object MyStream {
-    def from[A](start: A)(generator: A => A): MyStream[A] = ???
-  }
-
-  class EmptyStream[Nothing] extends MyStream[Nothing] {
-    override def isEmpty: Boolean = true
-
-    override def head: Nothing = ???
-
-    override def tail: MyStream[Nothing] = ???
-
-    override def #::[B >: Nothing](element: B): MyStream[B] = new FiniteStream[B](element, new EmptyStream[Nothing])
-
-    override def ++[B >: Nothing](anotherStream: MyStream[B]): MyStream[B] = ???
-
-    override def foreach(f: Nothing => Unit): Unit = ???
-
-    override def map[B](f: Nothing => B): MyStream[B] = ???
-
-    override def flatMap[B](f: Nothing => MyStream[B]): MyStream[B] = ???
-
-    override def filter(predicate: Nothing => Boolean): MyStream[Nothing] = ???
-
-    override def take(n: Int): MyStream[Nothing] = ???
-
-    override def takeAsList(n: Int): List[Nothing] = ???
-  }
-
-  class FiniteStream[+A](val head: A, val tail: MyStream[A]) extends MyStream[A] {
-    override def isEmpty: Boolean = ???
-
-    override def #::[B >: A](element: B): MyStream[B] = ???
-
-    override def ++[B >: A](anotherStream: MyStream[B]): MyStream[B] = ???
-
-    override def foreach(f: A => Unit): Unit = ???
-
-    override def map[B](f: A => B): MyStream[B] = ???
-
-    override def flatMap[B](f: A => MyStream[B]): MyStream[B] = ???
-
-    override def filter(predicate: A => Boolean): MyStream[A] = ???
-
-    override def take(n: Int): MyStream[A] = ???
-
-    override def takeAsList(n: Int): List[A] = ???
-  }
-
-  class InfiniteStream[+A](override val head: A, override val tail: MyStream[A], generator: A => A) extends MyStream[A] {
-    override def isEmpty: Boolean = false
-
-    override def #::[B >: A](element: B): MyStream[B] = ???
-
-    override def ++[B >: A](anotherStream: MyStream[B]): MyStream[B] = ???
-
-    override def foreach(f: A => Unit): Unit = ???
-
-    override def map[B](f: A => B): MyStream[B] = ???
-
-    override def flatMap[B](f: A => MyStream[B]): MyStream[B] = ???
-
-    override def filter(predicate: A => Boolean): MyStream[A] = ???
-
-    override def take(n: Int): MyStream[A] = ???
-
-    override def takeAsList(n: Int): List[A] = ???
-  }
 }
