@@ -1,8 +1,5 @@
 package lectures.lectures.part2advancedfunctionalprogramming
 
-import com.sun.javaws.exceptions.InvalidArgumentException
-import com.sun.tools.corba.se.idl.InvalidArgument
-
 object LazyEvaluation extends App{
 
   // lazy delays the evaluation of values
