@@ -1,7 +1,7 @@
 package lectures.part3concurrency
 
 import scala.concurrent.{Await, Future, Promise}
-import scala.util.{Failure, Random, Success}
+import scala.util.{Failure, Random, Success, Try}
 import scala.concurrent.duration._
 
 // important for futures
@@ -157,6 +157,8 @@ object FuturesAndPromises extends App {
     * 1) Fulfill a future immediately with a value
     * 2) Run a function which returns a future after a future has finished running
     * 3) first(fa, fb) => new future with the value of the future that finished first
+    * 4) last(fa, fb) => new future
+    * 5) retryUntil[T](action: () => Future[T], condition: T => Boolean): Future[T]
    */
 
   // 1)
@@ -168,10 +170,9 @@ object FuturesAndPromises extends App {
   }
 
   // 2)
-  def inSequence(f1: Future[Int], f2: Future[Int]): Int = {
-    Await.result(f1, 2.seconds)
-    Await.result(f2, 2.seconds)
-  }
+  def inSequence(f1: Future[Int], f2: Future[Int]): Future[Int] =
+    f1.flatMap(_ => f2)
+
 
   val promise1 = Promise[Int]()
   promise1.future.onComplete({
@@ -187,19 +188,95 @@ object FuturesAndPromises extends App {
   // 3)
   def first(f1: Future[Int], f2: Future[Int]): Future[Int] = {
     val result = Promise[Int]()
+
+    def tryComplete[A](promise: Promise[A], result: Try[A]) = {} // TODO: Continue here
+
     f1.onComplete {
-      case Success(value) => result.success(value)
+      case Success(value) => {
+        result.synchronized {if (!result.isCompleted) result.success(value)}
+      }
     }
 
     f2.onComplete {
-      case Success(value) => result.success(value)
+      case Success(value) => {
+        result.synchronized {if (!result.isCompleted) result.success(value)}
+      }
     }
     result.future
   }
-  // TODO: Test this. What happens when success is called in the onComplete of the future that finishes last?
+  val promise3 = Promise[Int]()
+  val promise4 = Promise[Int]()
+  val future3 = promise3.future
+  val future4 = promise4.future
 
+  val resultFuture = first(future3, future4)
+  promise3.success(10)
+  promise4.success(11)
+  Thread.sleep(100)
+  resultFuture.onComplete({
+    case Success(value) => println("The result of future is: " + value)
+  })
+
+  /*
+    4)
+   */
+
+  def last(f1: Future[Int], f2: Future[Int]): Future[Int] = {
+    var result = Promise[Int]()
+    f1.onComplete({
+      case Success(value) => {
+        try {
+          result.success(value)
+          result = Promise[Int]()
+        } catch {
+          case e: Throwable => result = Promise[Int]().success(value)
+        }
+      }
+    })
+    f2.onComplete({
+      case Success(value) => {
+        try {
+          result.success(value)
+          result = Promise[Int]()
+        } catch {
+          case e: Throwable => result = Promise[Int]().success(value)
+        }
+      }
+    })
+    result.future
+  }
+
+  val promise5 = Promise[Int]()
+  val promise6 = Promise[Int]()
+  val future5 = promise5.future
+  val future6 = promise6.future
+
+  val lastFuture = last(future5, future6)
+
+  promise5.success(10)
+  promise6.success(21)
+  Thread.sleep(100)
+  for {
+    value <- lastFuture
+  } println("The last future had the value " + value)
+
+
+  /*
+    5)
+   */
+
+  def retryUntil[T](action: () => Future[T], condition: T => Boolean): Future[T] = {
+    action().flatMap(value => if (condition(value)) Promise[T]().success(value).future else retryUntil(action, condition))
+  }
+  var x = 0
+  val validFuture = retryUntil(() => {
+    x += 1
+    Promise[Int]().success(x).future
+  }, (x: Int) => x > 10)
+
+  validFuture.onComplete({
+    case Success(x) => println("The valid x is " + x)
+  })
 
   Thread.sleep(2000)
-
-
 }

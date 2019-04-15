@@ -80,4 +80,5 @@ object Monads extends App {
   flatMap(x => f(x)) = f(a) ++ f(b) ++ f(c)
   map(g) = List(g(a), g(b), g(c))
    */
+
 }
