@@ -220,8 +220,8 @@ object FuturesAndPromises extends App {
     //f1.onComplete(t => tryComplete(promise, t))
     //f2.onComplete(t => tryComplete(promise, t))
     // best way (using built in function on promise):
-    f1.onComplete(t => promise.tryComplete(t))
-    f2.onComplete(t => promise.tryComplete(t))
+    f1.onComplete(promise.tryComplete)
+    f2.onComplete(promise.tryComplete)
     promise.future
   }
   val promise3 = Promise[Int]()
@@ -241,29 +241,33 @@ object FuturesAndPromises extends App {
     4)
    */
 
-  def last(f1: Future[Int], f2: Future[Int]): Future[Int] = {
-    var result = Promise[Int]()
-    f1.onComplete({
-      case Success(value) => {
-        try {
-          result.success(value)
-          result = Promise[Int]()
-        } catch {
-          case e: Throwable => result = Promise[Int]().success(value)
+  def last[A](f1: Future[A], f2: Future[A]): Future[A] = {
+    var promise1 = Promise[A]()
+    var promise2 = Promise[A]()
+
+    def tryCompleteAlternative(f: Future[A]): Unit = {
+      f.onComplete(t => t match {
+        case Success(value) => {
+          try {
+            promise1.success(value)
+          } catch {
+            case _ => promise2.success(value)
+          }
         }
-      }
-    })
-    f2.onComplete({
-      case Success(value) => {
-        try {
-          result.success(value)
-          result = Promise[Int]()
-        } catch {
-          case e: Throwable => result = Promise[Int]().success(value)
+        case Failure(e) => {
+          try {
+            promise1.failure(e)
+          } catch {
+            case _ => promise2.failure(e)
+          }
         }
-      }
-    })
-    result.future
+      })
+    }
+
+    tryCompleteAlternative(f1)
+    tryCompleteAlternative(f2)
+
+    promise2.future
   }
 
   val promise5 = Promise[Int]()
@@ -274,8 +278,8 @@ object FuturesAndPromises extends App {
   val lastFuture = last(future5, future6)
 
   promise5.success(10)
-  promise6.success(21)
   Thread.sleep(100)
+  promise6.success(21)
   for {
     value <- lastFuture
   } println("The last future had the value " + value)
