@@ -186,23 +186,43 @@ object FuturesAndPromises extends App {
   promise2.success(99)
 
   // 3)
-  def first(f1: Future[Int], f2: Future[Int]): Future[Int] = {
-    val result = Promise[Int]()
+  def first[A](f1: Future[A], f2: Future[A]): Future[A] = {
+    val promise = Promise[A]()
 
-    def tryComplete[A](promise: Promise[A], result: Try[A]) = {} // TODO: Continue here
+//    def tryComplete(future: Future[A]) = {
+//      future.onComplete {
+//        case Success(value) => {
+//          promise.synchronized {if (!promise.isCompleted) promise.success(value)}
+//        }
+//        case Failure(e) => {
+//          promise.synchronized {if (!promise.isCompleted) promise.failure(e)}
+//        }
+//      }
+//    }
 
-    f1.onComplete {
-      case Success(value) => {
-        result.synchronized {if (!result.isCompleted) result.success(value)}
+    def tryComplete(promise: Promise[A], result: Try[A]): Unit = {
+      result match {
+        case Success(value) => try {
+          promise.success(value)
+        } catch {
+          case _ =>
+        }
+        case Failure(e) => try {
+          promise.failure(e)
+        } catch {
+          case _ =>
+        }
       }
     }
 
-    f2.onComplete {
-      case Success(value) => {
-        result.synchronized {if (!result.isCompleted) result.success(value)}
-      }
-    }
-    result.future
+    //tryComplete(f1)
+    //tryComplete(f2)
+    //f1.onComplete(t => tryComplete(promise, t))
+    //f2.onComplete(t => tryComplete(promise, t))
+    // best way (using built in function on promise):
+    f1.onComplete(t => promise.tryComplete(t))
+    f2.onComplete(t => promise.tryComplete(t))
+    promise.future
   }
   val promise3 = Promise[Int]()
   val promise4 = Promise[Int]()
@@ -210,9 +230,9 @@ object FuturesAndPromises extends App {
   val future4 = promise4.future
 
   val resultFuture = first(future3, future4)
-  promise3.success(10)
-  promise4.success(11)
+  promise3.success(11)
   Thread.sleep(100)
+  promise4.success(10)
   resultFuture.onComplete({
     case Success(value) => println("The result of future is: " + value)
   })
