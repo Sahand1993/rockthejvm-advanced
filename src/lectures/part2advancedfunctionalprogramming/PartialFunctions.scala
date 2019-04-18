@@ -1,6 +1,4 @@
-package lectures.lectures.part2advancedfunctionalprogramming
-
-import scala.util.Try
+package lectures.part2advancedfunctionalprogramming
 
 object PartialFunctions extends App {
 

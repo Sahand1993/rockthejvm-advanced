@@ -1,4 +1,4 @@
-package lectures.lectures.part2advancedfunctionalprogramming
+package lectures.part2advancedfunctionalprogramming
 
 object CurriesPartiallyAppliedFunctions extends App {
 
