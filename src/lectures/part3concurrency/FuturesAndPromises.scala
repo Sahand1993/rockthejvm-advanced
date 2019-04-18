@@ -242,11 +242,11 @@ object FuturesAndPromises extends App {
    */
 
   def last[A](f1: Future[A], f2: Future[A]): Future[A] = {
-    var promise1 = Promise[A]()
-    var promise2 = Promise[A]()
+    val promise1 = Promise[A]()
+    val promise2 = Promise[A]()
 
     def tryCompleteAlternative(f: Future[A]): Unit = {
-      f.onComplete(t => t match {
+      f.onComplete {
         case Success(value) => {
           try {
             promise1.success(value)
@@ -261,11 +261,23 @@ object FuturesAndPromises extends App {
             case _ => promise2.failure(e)
           }
         }
-      })
+      }
     }
 
     tryCompleteAlternative(f1)
     tryCompleteAlternative(f2)
+
+    promise2.future
+  }
+
+  def betterLast[A](f1: Future[A], f2: Future[A]): Future[A] = {
+    val promise1 = Promise[A]()
+    val promise2 = Promise[A]()
+
+    val checkAndComplete: Try[A] => Unit = result => if(!promise1.tryComplete(result)) promise2.tryComplete(result)
+
+    f1.onComplete(checkAndComplete(_))
+    f2.onComplete(checkAndComplete(_))
 
     promise2.future
   }
@@ -275,14 +287,19 @@ object FuturesAndPromises extends App {
   val future5 = promise5.future
   val future6 = promise6.future
 
-  val lastFuture = last(future5, future6)
+  val lastFuture = betterLast(future5, future6)
+  val firstFuture = first(future5, future6)
 
   promise5.success(10)
   Thread.sleep(100)
   promise6.success(21)
   for {
-    value <- lastFuture
-  } println("The last future had the value " + value)
+    lastValue <- lastFuture
+    firstValue <- firstFuture
+  } {
+    println("The last future had the value " + lastValue)
+    println("The first future had the value " + firstValue)
+  }
 
 
   /*
@@ -292,8 +309,17 @@ object FuturesAndPromises extends App {
   def retryUntil[T](action: () => Future[T], condition: T => Boolean): Future[T] = {
     action().flatMap(value => if (condition(value)) Promise[T]().success(value).future else retryUntil(action, condition))
   }
+
+  def betterRetryUntil[T](action: () => Future[T], condition: T => Boolean): Future[T] = {
+    action()
+      .filter(condition(_))
+      .recoverWith({
+        case _ => betterRetryUntil(action, condition)
+      })
+  }
+
   var x = 0
-  val validFuture = retryUntil(() => {
+  val validFuture = betterRetryUntil(() => {
     x += 1
     Promise[Int]().success(x).future
   }, (x: Int) => x > 10)
