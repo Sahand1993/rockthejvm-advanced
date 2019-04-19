@@ -22,5 +22,4 @@ object ImplicitsIntro extends App {
   implicit val defaultAmount = 10
   println(increment(2))
   // this is not the same thing as default arguments
-  
 }
