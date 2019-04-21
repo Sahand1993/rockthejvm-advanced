@@ -89,4 +89,23 @@ object PimpMyLibrary extends App {
   implicit def stringToInt(string: String): Int = Integer.valueOf(string)
   println("6" / 2)
 
+  // equivalent to: implicit class RichAltInt(value: Int)
+  class RichAltInt(value: Int)
+  implicit def enrich(value: Int): RichAltInt = new RichAltInt(value)
+
+  // danger zone
+  implicit def intToBoolean(i: Int): Boolean = i == 1
+
+  /*
+    if (n)
+      doSomething()
+    else
+      doSomethingElse()
+   */
+
+  val aConditionedValue = if (3) "OK" else "Something wrong"
+  println(aConditionedValue)
+
+  // TIPS: Only use implicit and type classes. Avoid implicit defs
+
 }
